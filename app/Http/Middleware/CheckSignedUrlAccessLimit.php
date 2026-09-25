@@ -7,7 +7,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class CheckSignedUrlRevocation
+class CheckSignedUrlAccessLimit
 {
     public function handle(
         Request $request,
@@ -18,10 +18,6 @@ class CheckSignedUrlRevocation
             'signature'
         );
 
-        if (!$signature) {
-            abort(403);
-        }
-
         $signedUrl = SignedUrl::where(
             'signature',
             $signature
@@ -31,7 +27,11 @@ class CheckSignedUrlRevocation
             abort(403);
         }
 
-        if ($signedUrl->isRevoked()) {
+        if ($signedUrl->hasReachedAccessLimit()) {
+            abort(403);
+        }
+
+        if ($signedUrl->hasBeenUsed()) {
             abort(403);
         }
 
