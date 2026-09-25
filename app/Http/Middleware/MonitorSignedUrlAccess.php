@@ -10,14 +10,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class MonitorSignedUrlAccess
 {
-    /**
-     * Handle the incoming request.
-     */
     public function handle(
         Request $request,
         Closure $next
     ): Response {
-        $signature = $request->query('signature');
+
+        $signature = $request->query(
+            'signature'
+        );
 
         $signedUrl = SignedUrl::where(
             'signature',
@@ -25,17 +25,32 @@ class MonitorSignedUrlAccess
         )->first();
 
         if ($signedUrl) {
-            $signedUrl->increment('access_count');
+
+            $now = now();
+
+            $signedUrl->increment(
+                'access_count'
+            );
 
             $signedUrl->update([
-                'last_accessed_at' => now(),
+                'last_accessed_at' => $now,
+                'first_accessed_at' =>
+                    $signedUrl->first_accessed_at
+                        ?? $now,
             ]);
 
             SignedUrlAccess::create([
-                'signed_url_id' => $signedUrl->id,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'accessed_at' => now(),
+                'signed_url_id' =>
+                    $signedUrl->id,
+
+                'ip_address' =>
+                    $request->ip(),
+
+                'user_agent' =>
+                    $request->userAgent(),
+
+                'accessed_at' =>
+                    $now,
             ]);
         }
 

@@ -5,62 +5,109 @@ use App\Http\Controllers\SignedUrlController;
 
 /*
 |--------------------------------------------------------------------------
-| Signed URL Generator
+| Dynamic Signed URL Generator
 |--------------------------------------------------------------------------
 */
 
-// Main generator page.
-Route::get('/', [SignedUrlController::class, 'form'])
-    ->name('home');
+Route::get('/', [
+    SignedUrlController::class,
+    'form'
+])->name('home');
 
-// Generate signed URL.
-Route::post('/generate', [SignedUrlController::class, 'generate'])
-    ->name('generate');
+
+Route::post('/generate', [
+    SignedUrlController::class,
+    'generate'
+])->name('generate');
 
 
 /*
 |--------------------------------------------------------------------------
-| Signed URL Analytics
+| Analytics
 |--------------------------------------------------------------------------
 */
 
-// Analytics dashboard.
 Route::get('/signed-url/analytics', [
     SignedUrlController::class,
     'analytics'
 ])->name('signed-url.analytics');
 
-// Signed URL history.
+
+/*
+|--------------------------------------------------------------------------
+| History
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/signed-url/history', [
     SignedUrlController::class,
     'history'
 ])->name('signed-url.history');
 
-// Individual access history.
-Route::get('/signed-url/{signedUrl}/access-history', [
-    SignedUrlController::class,
-    'accessHistory'
-])->name('signed-url.access-history');
 
-// Revoke signed URL.
-Route::post('/signed-url/{signedUrl}/revoke', [
+/*
+|--------------------------------------------------------------------------
+| CSV Export
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/signed-url/export', [
     SignedUrlController::class,
-    'revoke'
-])->name('signed-url.revoke');
+    'exportCsv'
+])->name('signed-url.export');
 
 
 /*
 |--------------------------------------------------------------------------
-| Protected Secure Page
+| Individual Access History
 |--------------------------------------------------------------------------
 */
 
-// Original secure page.
-//
-// Middleware order:
-// 1. Spatie validates signature + expiry.
-// 2. Revocation middleware checks manual revocation.
-// 3. Monitoring middleware records successful access.
+Route::get(
+    '/signed-url/{signedUrl}/access-history',
+    [
+        SignedUrlController::class,
+        'accessHistory'
+    ]
+)->name('signed-url.access-history');
+
+
+/*
+|--------------------------------------------------------------------------
+| Individual Revoke
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/signed-url/{signedUrl}/revoke',
+    [
+        SignedUrlController::class,
+        'revoke'
+    ]
+)->name('signed-url.revoke');
+
+
+/*
+|--------------------------------------------------------------------------
+| Bulk Revoke
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/signed-url/bulk-revoke',
+    [
+        SignedUrlController::class,
+        'bulkRevoke'
+    ]
+)->name('signed-url.bulk-revoke');
+
+
+/*
+|--------------------------------------------------------------------------
+| Secure Page
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/secure-page', [
     SignedUrlController::class,
     'secure'
@@ -69,5 +116,6 @@ Route::get('/secure-page', [
     ->middleware([
         'signedurl',
         'signedurl.revoked',
+        'signedurl.limit',
         'signedurl.monitor',
     ]);
