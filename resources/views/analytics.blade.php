@@ -13,6 +13,7 @@
     <title>Signed URL Analytics</title>
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -50,7 +51,7 @@
         .stats {
             display: grid;
             grid-template-columns:
-                repeat(auto-fit, minmax(170px, 1fr));
+                repeat(auto-fit, minmax(160px, 1fr));
             gap: 15px;
         }
 
@@ -124,6 +125,16 @@
             color: #92400e;
         }
 
+        .limit {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .used {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
         .button {
             display: inline-block;
             padding: 8px 12px;
@@ -141,9 +152,10 @@
             }
 
             table {
-                min-width: 800px;
+                min-width: 900px;
             }
         }
+
     </style>
 
 </head>
@@ -154,7 +166,9 @@
 
     <div class="header-inner">
 
-        <h1>📊 Signed URL Analytics Dashboard</h1>
+        <h1>
+            📊 Signed URL Analytics Dashboard
+        </h1>
 
         <a href="{{ route('home') }}">
             Generator
@@ -193,6 +207,21 @@
         </div>
 
         <div class="stat">
+            <h3>Limit Reached</h3>
+            <strong>{{ $limitReachedUrls }}</strong>
+        </div>
+
+        <div class="stat">
+            <h3>One-Time URLs</h3>
+            <strong>{{ $oneTimeUrls }}</strong>
+        </div>
+
+        <div class="stat">
+            <h3>Used One-Time</h3>
+            <strong>{{ $usedOneTimeUrls }}</strong>
+        </div>
+
+        <div class="stat">
             <h3>Total Accesses</h3>
             <strong>{{ $totalAccesses }}</strong>
         </div>
@@ -206,18 +235,28 @@
 
     <div class="section">
 
-        <h2>Recent Signed URLs</h2>
+        <h2>
+            Recent Signed URLs
+        </h2>
 
         <table>
 
             <thead>
 
             <tr>
+
                 <th>ID</th>
+
+                <th>Name</th>
+
                 <th>Target URL</th>
+
                 <th>Status</th>
+
                 <th>Accesses</th>
+
                 <th>Expires</th>
+
             </tr>
 
             </thead>
@@ -232,40 +271,38 @@
                         #{{ $url->id }}
                     </td>
 
+                    <td>
+                        {{ $url->name ?? 'Untitled' }}
+                    </td>
+
                     <td class="url">
                         {{ $url->target_url }}
                     </td>
 
                     <td>
 
-                        @if($url->status === 'Active')
-
-                            <span class="badge active">
-                                Active
-                            </span>
-
-                        @elseif($url->status === 'Expired')
-
-                            <span class="badge expired">
-                                Expired
-                            </span>
-
-                        @else
-
-                            <span class="badge revoked">
-                                Revoked
-                            </span>
-
-                        @endif
+                        <span
+                            class="badge {{ $url->status_class }}"
+                        >
+                            {{ $url->status }}
+                        </span>
 
                     </td>
 
                     <td>
+
                         {{ $url->access_count }}
+
+                        /
+
+                        {{ $url->max_accesses ?? '∞' }}
+
                     </td>
 
                     <td>
-                        {{ $url->expires_at->format('d M Y h:i A') }}
+                        {{ $url->expires_at->format(
+                            'd M Y h:i A'
+                        ) }}
                     </td>
 
                 </tr>
@@ -273,9 +310,11 @@
             @empty
 
                 <tr>
-                    <td colspan="5">
+
+                    <td colspan="6">
                         No signed URLs generated yet.
                     </td>
+
                 </tr>
 
             @endforelse
@@ -288,17 +327,24 @@
 
     <div class="section">
 
-        <h2>Recent Access Activity</h2>
+        <h2>
+            Recent Access Activity
+        </h2>
 
         <table>
 
             <thead>
 
             <tr>
+
                 <th>URL ID</th>
+
                 <th>IP Address</th>
+
                 <th>Accessed At</th>
+
                 <th>User Agent</th>
+
             </tr>
 
             </thead>
@@ -318,7 +364,9 @@
                     </td>
 
                     <td>
-                        {{ $access->accessed_at->format('d M Y h:i A') }}
+                        {{ $access->accessed_at->format(
+                            'd M Y h:i A'
+                        ) }}
                     </td>
 
                     <td class="url">
