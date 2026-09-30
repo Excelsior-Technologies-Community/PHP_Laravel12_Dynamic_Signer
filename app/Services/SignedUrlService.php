@@ -100,6 +100,10 @@ class SignedUrlService
 
         $signature = $queryParameters['signature'] ?? null;
 
+        $passcode = $options['passcode'] ?? null;
+        $isPasscodeProtected = !empty($passcode);
+        $burnAfterReading = (bool) ($options['burn_after_reading'] ?? false);
+
         /*
         |--------------------------------------------------------------------------
         | Save Database Record
@@ -125,6 +129,18 @@ class SignedUrlService
 
             'one_time' => $oneTime,
 
+            'passcode' => $passcode,
+
+            'is_passcode_protected' => $isPasscodeProtected,
+
+            'burn_after_reading' => $burnAfterReading,
+
+            'is_burned' => false,
+
+            'created_ip' => $options['created_ip'] ?? null,
+
+            'notes' => $options['notes'] ?? null,
+
             'last_accessed_at' => null,
         ]);
 
@@ -146,6 +162,12 @@ class SignedUrlService
             'max_accesses' => $record->max_accesses,
 
             'one_time' => $record->one_time,
+
+            'passcode' => $record->passcode,
+
+            'is_passcode_protected' => $record->is_passcode_protected,
+
+            'burn_after_reading' => $record->burn_after_reading,
         ];
     }
 }

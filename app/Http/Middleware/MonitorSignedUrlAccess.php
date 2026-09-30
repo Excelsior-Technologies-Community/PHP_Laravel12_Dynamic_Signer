@@ -32,12 +32,19 @@ class MonitorSignedUrlAccess
                 'access_count'
             );
 
-            $signedUrl->update([
+            $updateData = [
                 'last_accessed_at' => $now,
                 'first_accessed_at' =>
                     $signedUrl->first_accessed_at
                         ?? $now,
-            ]);
+            ];
+
+            if ($signedUrl->burn_after_reading) {
+                $updateData['revoked_at'] = $now;
+                $updateData['is_burned'] = true;
+            }
+
+            $signedUrl->update($updateData);
 
             SignedUrlAccess::create([
                 'signed_url_id' =>

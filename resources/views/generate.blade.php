@@ -240,9 +240,9 @@
 
             <input
                 type="text"
-                name="url"
-                value="{{ old('url', route('secure.page')) }}"
-                placeholder="Enter URL or Route Name"
+                name="target_url"
+                value="{{ old('target_url', route('secure.page')) }}"
+                placeholder="Enter Target URL"
                 required
             >
 
@@ -254,13 +254,13 @@
                         Expiration
                     </label>
 
-                    <select name="minutes">
+                    <select name="expires_in">
 
                         @for($i = 1; $i <= 60; $i++)
 
                             <option
                                 value="{{ $i }}"
-                                {{ old('minutes', 5) == $i ? 'selected' : '' }}
+                                {{ old('expires_in', 5) == $i ? 'selected' : '' }}
                             >
                                 {{ $i }} minute{{ $i > 1 ? 's' : '' }}
                             </option>
@@ -290,26 +290,51 @@
 
             </div>
 
-            <div class="checkbox-row">
+            <div class="grid" style="margin-top: 15px;">
+                <div>
+                    <label>
+                        🔑 Passcode Protection (PIN)
+                    </label>
+                    <input
+                        type="text"
+                        name="passcode"
+                        value="{{ old('passcode') }}"
+                        placeholder="Optional secret PIN (e.g. 1234)"
+                    >
+                </div>
 
-                <input
-                    type="checkbox"
-                    name="one_time"
-                    value="1"
-                    id="one_time"
-                    {{ old('one_time') ? 'checked' : '' }}
-                >
+                <div style="display:flex; flex-direction:column; justify-content:center;">
+                    <div class="checkbox-row" style="margin: 25px 0 0 0;">
+                        <input
+                            type="checkbox"
+                            name="one_time"
+                            value="1"
+                            id="one_time"
+                            {{ old('one_time') ? 'checked' : '' }}
+                        >
 
-                <label
-                    for="one_time"
-                    style="margin:0"
-                >
-                    One-time URL
-                </label>
+                        <label for="one_time" style="margin:0">
+                            One-time URL
+                        </label>
+                    </div>
 
+                    <div class="checkbox-row" style="margin: 10px 0 0 0;">
+                        <input
+                            type="checkbox"
+                            name="burn_after_reading"
+                            value="1"
+                            id="burn_after_reading"
+                            {{ old('burn_after_reading') ? 'checked' : '' }}
+                        >
+
+                        <label for="burn_after_reading" style="margin:0; color:#dc3545; font-weight:bold;">
+                            🔥 Burn After Reading (Self-Destruct)
+                        </label>
+                    </div>
+                </div>
             </div>
 
-            <label>
+            <label style="margin-top:15px;">
                 Notes
             </label>
 
@@ -346,82 +371,107 @@
 
         </div>
 
-        @if(isset($signedUrl))
+        @php
+            $res = session('signedUrlResult');
+            $generatedUrl = $res['url'] ?? ($signedUrl ?? null);
+        @endphp
 
-            <div class="result">
+        @if($generatedUrl)
 
-                <div class="success">
-                    Signed URL generated successfully.
+            <div class="result" style="background:#f8f9fa; border:2px solid #0d6efd; border-radius:15px; padding:25px; margin-top:30px;">
+
+                <div class="success" style="background:#d1e7dd; color:#0f5132; padding:12px; border-radius:8px; margin-bottom:15px; font-weight:bold; text-align:center;">
+                    ✅ Signed URL Generated Successfully!
                 </div>
 
-                <label>
-                    Generated Signed URL
-                </label>
+                <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
+                    {{-- QR Code Section --}}
+                    <div style="text-align:center; flex: 0 0 180px;">
+                        @php
+                            $qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' . urlencode($generatedUrl);
+                        @endphp
+                        <img src="{{ $qrApiUrl }}" alt="QR Code" style="border: 2px solid #ddd; border-radius: 10px; padding: 5px; background: white; width: 160px; height: 160px;">
+                        <a href="{{ $qrApiUrl }}" download="signed-url-qr.png" target="_blank" style="display:inline-block; margin-top:8px; font-size:12px; color:#0d6efd; text-decoration:none; font-weight:bold;">
+                            📥 Download QR Code
+                        </a>
+                    </div>
 
-                <input
-                    id="link"
-                    value="{{ $signedUrl }}"
-                    readonly
-                >
+                    {{-- URL and Share Suite --}}
+                    <div style="flex: 1; min-width: 250px;">
+                        <label style="font-weight:bold; display:block; margin-bottom:5px;">
+                            Generated Signed URL
+                        </label>
 
-                <div style="text-align:center;">
+                        <input
+                            id="link"
+                            value="{{ $generatedUrl }}"
+                            readonly
+                            style="width:100%; font-family:monospace; padding:10px; border-radius:6px; border:1px solid #ccc;"
+                        >
 
-                    <button
-                        type="button"
-                        onclick="copyLink()"
-                    >
-                        📋 Copy Link
-                    </button>
+                        <div style="margin-top:15px; display:flex; flex-wrap:wrap; gap:8px;">
+                            <button
+                                type="button"
+                                onclick="copyLink()"
+                                style="background:#0d6efd; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;"
+                            >
+                                📋 Copy Link
+                            </button>
 
-                    <a
-                        href="{{ $signedUrl }}"
-                        class="button"
-                    >
-                        🔓 Open Secure Page
-                    </a>
+                            <a
+                                href="{{ $generatedUrl }}"
+                                class="button"
+                                target="_blank"
+                                style="background:#198754; color:white; text-decoration:none; padding:8px 14px; border-radius:6px;"
+                            >
+                                🔓 Open Secure Link
+                            </a>
 
+                            <a
+                                href="https://api.whatsapp.com/send?text={{ urlencode('Access Signed Link: ' . $generatedUrl) }}"
+                                target="_blank"
+                                style="background:#25D366; color:white; text-decoration:none; padding:8px 14px; border-radius:6px; font-weight:bold;"
+                            >
+                                💬 WhatsApp
+                            </a>
+
+                            <a
+                                href="mailto:?subject={{ urlencode('Secure Signed URL') }}&body={{ urlencode('Here is your secure signed link: ' . $generatedUrl) }}"
+                                style="background:#ea4335; color:white; text-decoration:none; padding:8px 14px; border-radius:6px; font-weight:bold;"
+                            >
+                                ✉️ Email
+                            </a>
+
+                            <a
+                                href="https://t.me/share/url?url={{ urlencode($generatedUrl) }}&text={{ urlencode('Secure Signed URL') }}"
+                                target="_blank"
+                                style="background:#0088cc; color:white; text-decoration:none; padding:8px 14px; border-radius:6px; font-weight:bold;"
+                            >
+                                ✈️ Telegram
+                            </a>
+                        </div>
+
+                        <div
+                            id="copySuccess"
+                            class="copy-success"
+                            style="display:none; color:#198754; font-weight:bold; margin-top:10px;"
+                        >
+                            ✅ Signed URL copied successfully to clipboard!
+                        </div>
+                    </div>
                 </div>
 
-                <div
-                    id="copySuccess"
-                    class="copy-success"
-                >
-                    ✅ Signed URL copied successfully!
-                </div>
-
-                <div class="info-box">
-
-                    @if($signedUrlRecord->name)
-
-                        <p>
-                            <strong>Name:</strong>
-                            {{ $signedUrlRecord->name }}
-                        </p>
-
-                    @endif
-
-                    <p>
-                        <strong>Expires:</strong>
-                        {{ $signedUrlRecord->expires_at->format('d M Y h:i A') }}
-                    </p>
-
-                    <p>
-                        <strong>Maximum Accesses:</strong>
-
-                        {{ $signedUrlRecord->max_accesses ?? 'Unlimited' }}
-                    </p>
-
-                    <p>
-                        <strong>One Time:</strong>
-
-                        {{ $signedUrlRecord->one_time ? 'Yes' : 'No' }}
-                    </p>
-
-                </div>
-
-                <p id="timer">
-                    Calculating expiry...
-                </p>
+                {{-- Badges info --}}
+                @if(isset($res))
+                    <div class="info-box" style="margin-top:20px; background:white; padding:15px; border-radius:8px; border:1px solid #eee;">
+                        @if(!empty($res['name']))
+                            <p style="margin:4px 0;"><strong>Name:</strong> {{ $res['name'] }}</p>
+                        @endif
+                        <p style="margin:4px 0;"><strong>One Time:</strong> {{ !empty($res['one_time']) ? 'Yes' : 'No' }}</p>
+                        <p style="margin:4px 0;"><strong>Passcode Protected:</strong> {{ !empty($res['is_passcode_protected']) ? '🔑 Yes (PIN Required)' : 'No' }}</p>
+                        <p style="margin:4px 0;"><strong>Burn After Reading:</strong> {{ !empty($res['burn_after_reading']) ? '🔥 Yes (Self-Destructs after 1st access)' : 'No' }}</p>
+                    </div>
+                @endif
 
             </div>
 

@@ -18,7 +18,7 @@ class SignedUrlController extends Controller
      */
     public function form()
     {
-        return view('signed-url');
+        return view('generate');
     }
 
     /**
@@ -59,6 +59,17 @@ class SignedUrlController extends Controller
                 'boolean',
             ],
 
+            'passcode' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'burn_after_reading' => [
+                'nullable',
+                'boolean',
+            ],
+
             'notes' => [
                 'nullable',
                 'string',
@@ -66,26 +77,11 @@ class SignedUrlController extends Controller
             ],
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | One-Time URL
-        |--------------------------------------------------------------------------
-        |
-        | A one-time URL always allows exactly one access.
-        |
-        */
-
         $oneTime = $request->boolean('one_time');
 
         $maxAccesses = $oneTime
             ? 1
             : ($validated['max_accesses'] ?? null);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create Signed URL
-        |--------------------------------------------------------------------------
-        */
 
         $result = $signer->create(
             $validated['target_url'],
@@ -95,6 +91,8 @@ class SignedUrlController extends Controller
                 'name' => $validated['name'] ?? null,
                 'max_accesses' => $maxAccesses,
                 'one_time' => $oneTime,
+                'passcode' => $validated['passcode'] ?? null,
+                'burn_after_reading' => $request->boolean('burn_after_reading'),
                 'notes' => $validated['notes'] ?? null,
                 'created_ip' => $request->ip(),
             ]
@@ -104,6 +102,27 @@ class SignedUrlController extends Controller
             ->route('home')
             ->with('success', 'Signed URL generated successfully.')
             ->with('signedUrlResult', $result);
+    }
+
+    /**
+     * Verify Passcode / PIN
+     */
+    public function verifyPasscode(Request $request)
+    {
+        $request->validate([
+            'signature' => 'required|string',
+            'passcode' => 'required|string',
+            'full_url' => 'required|string',
+        ]);
+
+        $signedUrl = SignedUrl::where('signature', $request->signature)->firstOrFail();
+
+        if ($signedUrl->passcode === $request->passcode) {
+            $request->session()->put('signed_url_verified_' . $request->signature, true);
+            return redirect($request->full_url);
+        }
+
+        return back()->with('error', '❌ Invalid Passcode / PIN. Access Denied!');
     }
 
     /**
