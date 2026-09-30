@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'signedurl.revoked' => CheckSignedUrlRevocation::class,
             'signedurl.monitor' => MonitorSignedUrlAccess::class,
+            'signedurl.passcode' => \App\Http\Middleware\CheckSignedUrlPasscode::class,
         ]);
 
     })

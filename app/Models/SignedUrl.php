@@ -24,6 +24,10 @@ class SignedUrl extends Model
         'first_accessed_at',
         'created_ip',
         'notes',
+        'passcode',
+        'is_passcode_protected',
+        'burn_after_reading',
+        'is_burned',
     ];
 
     protected function casts(): array
@@ -38,6 +42,9 @@ class SignedUrl extends Model
             'access_count' => 'integer',
 
             'one_time' => 'boolean',
+            'is_passcode_protected' => 'boolean',
+            'burn_after_reading' => 'boolean',
+            'is_burned' => 'boolean',
         ];
     }
 
@@ -112,6 +119,10 @@ class SignedUrl extends Model
      */
     public function getStatusAttribute(): string
     {
+        if ($this->is_burned) {
+            return 'Burned';
+        }
+
         if ($this->isRevoked()) {
             return 'Revoked';
         }
@@ -137,6 +148,7 @@ class SignedUrl extends Model
             'Expired' => 'expired',
             'Revoked' => 'revoked',
             'Limit Reached' => 'limit',
+            'Burned' => 'burned',
             default => 'active',
         };
     }

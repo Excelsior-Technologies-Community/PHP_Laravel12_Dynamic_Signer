@@ -102,6 +102,12 @@ Route::post(
 )->name('signed-url.bulk-revoke');
 
 
+Route::post('/signed-url/verify-passcode', [
+    SignedUrlController::class,
+    'verifyPasscode'
+])->name('signed-url.verify-passcode');
+
+
 /*
 |--------------------------------------------------------------------------
 | Secure Page
@@ -117,5 +123,6 @@ Route::get('/secure-page', [
         'signedurl',
         'signedurl.revoked',
         'signedurl.limit',
+        'signedurl.passcode',
         'signedurl.monitor',
     ]);
